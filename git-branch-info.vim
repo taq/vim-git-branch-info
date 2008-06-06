@@ -1,7 +1,7 @@
 "
 " Git branch info
 " Last change: June 5 2008
-" Version> 0.0.2
+" Version> 0.0.3
 " Maintainer: Eustáquio 'TaQ' Rangel
 " License: GPL
 " URL: git://github.com/taq/vim-git-branch-info.git
@@ -60,20 +60,66 @@
 " This will show you the current branch only. No prefix text, no characters
 " around it. You can also make another functions to use the returned array.
 "
+let s:menu_on	= 0
+let s:checking = ""
+
+function GitBranchInfoRenewMenu(current,heads,remotes)
+	call GitBranchInfoRemoveMenu()
+	call GitBranchInfoShowMenu(a:current,a:heads,a:remotes)
+endfunction
+
+function GitBranchInfoCheckout(branch)
+	let l:tokens = GitBranchInfoTokens()
+	exe "!git\ checkout\ ".a:branch
+	call GitBranchInfoRenewMenu(l:tokens[0],l:tokens[1],l:tokens[2])
+endfunction
+
+function GitBranchInfoShowMenu(current,heads,remotes)
+	if !has("gui")
+		return
+	endif
+	let s:menu_on	= 1
+	let l:compare	= a:current
+	let l:current	= [a:current]
+	let l:heads		= len(a:heads)>0	 ? a:heads	 : []
+	let l:remotes	= len(a:remotes)>0 ? a:remotes : []
+	let l:locals	= sort(extend(l:current,l:heads))
+	for l:branch in l:locals
+		let l:moption	= (l:branch==l:compare ? "*\\ " : "\-\\ ").l:branch
+		let l:mcom		= (l:branch==l:compare ? ":echo 'Already\ on\ branch\ \''".l:branch."\''.'<CR>" : "call GitBranchInfoCheckout('".l:branch."')<CR><CR>")
+		exe ":menu Plugin.Git\\ Info.".l:moption." :".l:mcom
+	endfor
+	exe ":menu Plugin.Git\\ Info.-Local- :"
+	for l:branch in l:remotes
+		exe "menu Plugin.Git\\ Info.".l:branch." :echo 'No fetch feature yet.'<CR>"
+	endfor
+endfunction
+
+function GitBranchInfoRemoveMenu()
+	if !has("gui") || s:menu_on==0
+		return
+	endif
+	exe ":unmenu Plugin.Git\\ Info" 
+	let s:menu_on = 0
+endfunction
 
 function GitBranchInfoString()
-	let s:tokens	= GitBranchInfoTokens()	" get the tokens
-	if len(s:tokens)==1							" no git here
-		return s:tokens[0]
+	let l:tokens	= GitBranchInfoTokens()	" get the tokens
+	if len(l:tokens)==1							" no git here
+		call GitBranchInfoRemoveMenu()
+		return l:tokens[0]
 	end
-	let s:current	= s:tokens[0]				" the current branch is the first one
-	let s:branches	= s:tokens[1]				" the other branches are the last one
-	let s:remotes	= s:tokens[2]				" remote branches
+	let s:current	= l:tokens[0]				" the current branch is the first one
+	let l:branches	= l:tokens[1]				" the other branches are the last one
+	let l:remotes	= l:tokens[2]				" remote branches
 	" check for around characters
-	let s:around	= exists("g:git_branch_status_around") ? (strlen(g:git_branch_status_around)==2 ? split(g:git_branch_status_around,'\zs') : ["",""]) : ["[","]"]
+	let l:around	= exists("g:git_branch_status_around") ? (strlen(g:git_branch_status_around)==2 ? split(g:git_branch_status_around,'\zs') : ["",""]) : ["[","]"]
 	" find the prefix text
-	let s:text		= exists("g:git_branch_status_text")   ? g:git_branch_status_text : " Git "
-	return s:text.s:around[0].s:current.s:around[1].(exists("g:git_branch_status_head_current")?"":s:around[0].join(s:branches,",").s:around[1])
+	let l:text		= exists("g:git_branch_status_text")   ? g:git_branch_status_text : " Git "
+	if s:menu_on == 0
+		call GitBranchInfoShowMenu(l:tokens[0],l:tokens[1],l:tokens[2])
+	endif
+	return l:text.l:around[0].s:current.l:around[1].(exists("g:git_branch_status_head_current")?"":l:around[0].join(l:branches,",").l:around[1])
 endfunction
 
 function GitBranchInfoTokens()
@@ -82,17 +128,22 @@ function GitBranchInfoTokens()
 	endif
 	let s:current	= split(split(readfile(".git/HEAD",'',1)[0])[1],"/")[2]
 	if exists("g:git_branch_status_head_current")
-		let s:heads	= []
+		let l:heads	= []
 	else		
-		let s:heads	= split(glob(".git/refs/heads/*"),"\n")
-		call map(s:heads,'substitute(v:val,".git/refs/heads/","","")')
-		call sort(filter(s:heads,'v:val !~ s:current'))
+		let l:heads	= split(glob(".git/refs/heads/*"),"\n")
+		call map(l:heads,'substitute(v:val,".git/refs/heads/","","")')
+		call sort(filter(l:heads,'v:val !~ s:current'))
 	endif		
 	if exists("g:git_branch_status_ignore_remotes")
-		let s:remotes = []
+		let l:remotes = []
 	else
-		let s:remotes	= split(glob(".git/refs/remotes/*/**"),"\n")
-		call sort(map(s:remotes,'substitute(v:val,".git/refs/remotes/","","")'))
+		let l:remotes	= split(glob(".git/refs/remotes/*/**"),"\n")
+		call sort(map(l:remotes,'substitute(v:val,".git/refs/remotes/","","")'))
 	endif		
-	return [s:current,s:heads,s:remotes]
+	let l:checking = s:current.join(l:heads).join(l:remotes)
+	if l:checking != s:checking && has("gui")
+		call GitBranchInfoRenewMenu(s:current,l:heads,l:remotes)
+	endif
+	let s:checking = l:checking
+	return [s:current,l:heads,l:remotes]
 endfunction
