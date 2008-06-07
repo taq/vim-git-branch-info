@@ -85,13 +85,15 @@ function GitBranchInfoShowMenu(current,heads,remotes)
 	let l:remotes	= len(a:remotes)>0 ? a:remotes : []
 	let l:locals	= sort(extend(l:current,l:heads))
 	for l:branch in l:locals
-		let l:moption	= (l:branch==l:compare ? "*\\ " : "\-\\ ").l:branch
+		let l:moption	= (l:branch==l:compare ? "Working\\ \\on\\ " : "Checkout\\ ").l:branch
 		let l:mcom		= (l:branch==l:compare ? ":echo 'Already\ on\ branch\ \''".l:branch."\''.'<CR>" : "call GitBranchInfoCheckout('".l:branch."')<CR><CR>")
-		exe ":menu Plugin.Git\\ Info.".l:moption." :".l:mcom
+		exe ":menu <silent> Plugin.Git\\ Info.".l:moption." :".l:mcom
 	endfor
-	exe ":menu Plugin.Git\\ Info.-Local- :"
+	exe ":menu <silent> Plugin.Git\\ Info.-Local- :"
 	for l:branch in l:remotes
-		exe "menu Plugin.Git\\ Info.".l:branch." :echo 'No fetch feature yet.'<CR>"
+		let l:tokens	= split(l:branch,"/")
+		let l:mcom		= ":!git fetch ".l:tokens[0]." ".l:tokens[1]
+		exe "menu <silent> Plugin.Git\\ Info.".l:branch." :".l:mcom."<CR><CR>"
 	endfor
 endfunction
 
