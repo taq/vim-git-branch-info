@@ -93,7 +93,7 @@ function GitBranchInfoShowMenu(current,heads,remotes)
 	for l:branch in l:remotes
 		let l:tokens	= split(l:branch,"/")
 		let l:mcom		= ":!git fetch ".l:tokens[0]." ".l:tokens[1]
-		exe "menu <silent> Plugin.Git\\ Info.".l:branch." :".l:mcom."<CR><CR>"
+		exe "menu <silent> Plugin.Git\\ Info.Fetch\\ ".l:branch." :".l:mcom."<CR><CR>"
 	endfor
 endfunction
 
