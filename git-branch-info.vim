@@ -1,6 +1,6 @@
 "
 " Git branch info
-" Last change: June 5 2008
+" Last change: June 11 2008
 " Version> 0.0.4
 " Maintainer: Eustáquio 'TaQ' Rangel
 " License: GPL
@@ -66,20 +66,34 @@ let b:git_dir	= ""
 let b:git_load_branch = ""
 
 autocmd BufEnter * call GitBranchInfoInit()
-autocmd BufWrite * call GitBranchInfoWriteCheck()
+autocmd BufWriteCmd * call GitBranchInfoWriteCheck()
 
 function GitBranchInfoWriteCheck()
+	" not controlled by Git, get out
 	if empty(b:git_dir)
+		exec "write"
 		return 1
 	endif
+	" if the branches are the same, no problem
 	let l:current = GitBranchInfoTokens()[0]
-	if l:current!=b:git_load_branch
-		echohl ErrorMsg
-		let l:answer = input("File loaded from \'".b:git_load_branch."\' branch but saved on \'".l:current."\' branch, press ENTER.")
-		echohl None
-		return 0
+	if l:current==b:git_load_branch
+		exec "write"
+		return 1
 	endif
-	return 1
+	" ask what we will do
+	echohl ErrorMsg
+	let l:answer = tolower(input("Loaded from \'".b:git_load_branch."\' branch but saving on \'".l:current."\' branch, confirm [y/n]? ","n"))
+	echohl None
+	let l:msg = "File ".(l:answer=="y" ? "" : "NOT ")."saved on branch \'".l:current."\'."
+	" ok, save even with different branches
+	if l:answer=="y"
+		exec "write"
+	endif
+	" show message
+	echohl WarningMsg
+	echo l:msg
+	echohl None
+	return l:answer=="y"
 endfunction
 
 function GitBranchInfoInit()
