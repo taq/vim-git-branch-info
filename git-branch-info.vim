@@ -140,9 +140,9 @@ function GitBranchInfoCheckout(branch)
 	call GitBranchInfoRenewMenu(l:tokens[0],l:tokens[1],l:tokens[2])
 endfunction
 
-function GitBranchInfoFetch(remote,branch)
+function GitBranchInfoFetch(remote)
 	let l:tokens	= GitBranchInfoTokens()
-	let l:fetch		=  "git\ fetch\ ".a:remote."\ ".a:branch
+	let l:fetch		=  "git\ fetch\ ".a:remote
 	let l:where		= substitute(b:git_dir,".git$","","")
 	let l:cmd		= strlen(l:where)>0 ? "!cd\ ".l:where.";\ ".l:fetch : "!".l:fetch
 	exe l:cmd
@@ -164,9 +164,14 @@ function GitBranchInfoShowMenu(current,heads,remotes)
 		exe ":menu <silent> Plugin.Git\\ Info.".l:moption." :".l:mcom
 	endfor
 	exe ":menu <silent> Plugin.Git\\ Info.-Local- :"
+	let l:lastone = ""
 	for l:branch in l:remotes
 		let l:tokens	= split(l:branch,"/")
-		exe "menu <silent> Plugin.Git\\ Info.Fetch\\ ".l:branch." :call GitBranchInfoFetch('".l:tokens[0]."','".l:tokens[1]."')<CR><CR>"
+		if l:tokens[0]==l:lastone
+			continue
+		endif
+		let l:lastone = l:tokens[0]
+		exe "menu <silent> Plugin.Git\\ Info.Fetch\\ ".l:tokens[0]." :call GitBranchInfoFetch('".l:tokens[0]."')<CR><CR>"
 	endfor
 endfunction
 
