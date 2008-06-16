@@ -204,7 +204,12 @@ endfunction
 
 function GitBranchInfoTokens()
 	if empty(b:git_dir)
+		let s:current = ''
 		return [exists("g:git_branch_status_nogit") ? g:git_branch_status_nogit : "No git."]
+	endif
+	if !filereadable(b:git_dir."/HEAD")
+		let s:current = ''
+		return [s:current,[],[]]
 	endif
 	let s:current	= split(split(readfile(b:git_dir."/HEAD",'',1)[0])[1],"/")[2]
 	if exists("g:git_branch_status_head_current")
