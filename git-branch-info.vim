@@ -77,19 +77,14 @@ function GitBranchInfoCheckReadable()
 endfunction
 
 function GitBranchInfoWriteCheck()
-	let l:writable = filewritable(expand("<afile>"))
 	if !GitBranchInfoCheckGitDir()
-		if l:writable
-			exec "write"
-		endif			
+		exec "write"
 		return 1
 	endif
 	" if the branches are the same, no problem
 	let l:current = GitBranchInfoTokens()[0]
 	if l:current==b:git_load_branch
-		if l:writable
-			exec "write"
-		endif			
+		exec "write"
 		return 1
 	endif
 	" ask what we will do
