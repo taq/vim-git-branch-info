@@ -68,16 +68,28 @@ let b:git_load_branch = ""
 autocmd BufEnter * call GitBranchInfoInit()
 autocmd BufWriteCmd * call GitBranchInfoWriteCheck()
 
+function GitBranchInfoCheckGitDir()
+	return exists("b:git_dir") && !empty(b:git_dir)
+endfunction
+
+function GitBranchInfoCheckReadable()
+	return filereadable(b:git_dir."/HEAD")
+endfunction
+
 function GitBranchInfoWriteCheck()
-	" not controlled by Git, get out
-	if empty(b:git_dir)
-		exec "write"
+	let l:writable = filewritable(expand("<afile>"))
+	if !GitBranchInfoCheckGitDir()
+		if l:writable
+			exec "write"
+		endif			
 		return 1
 	endif
 	" if the branches are the same, no problem
 	let l:current = GitBranchInfoTokens()[0]
 	if l:current==b:git_load_branch
-		exec "write"
+		if l:writable
+			exec "write"
+		endif			
 		return 1
 	endif
 	" ask what we will do
@@ -203,11 +215,11 @@ function GitBranchInfoString()
 endfunction
 
 function GitBranchInfoTokens()
-	if empty(b:git_dir)
+	if !GitBranchInfoCheckGitDir()
 		let s:current = ''
 		return [exists("g:git_branch_status_nogit") ? g:git_branch_status_nogit : "No git."]
 	endif
-	if !filereadable(b:git_dir."/HEAD")
+	if !GitBranchInfoCheckReadable()
 		let s:current = ''
 		return [s:current,[],[]]
 	endif
