@@ -77,25 +77,39 @@ function GitBranchInfoCheckReadable()
 endfunction
 
 function GitBranchInfoWriteCheck()
+	" not controlled by Git, write this thing!
 	if !GitBranchInfoCheckGitDir()
 		exec "write"
 		return 1
 	endif
+
+	" just write normal buffers
+	let l:buftype = getbufvar(bufnr("%"),'&buftype')
+	if strlen(l:buftype)>0
+		echohl WarningMsg
+		echo "Not writing if it's not a normal buffer (found a ".l:buftype." buffer)."
+		echohl None
+		return 0
+	endif
+
 	" if the branches are the same, no problem
 	let l:current = GitBranchInfoTokens()[0]
 	if l:current==b:git_load_branch
 		exec "write"
 		return 1
 	endif
+
 	" ask what we will do
 	echohl ErrorMsg
 	let l:answer = tolower(input("Loaded from \'".b:git_load_branch."\' branch but saving on \'".l:current."\' branch, confirm [y/n]? ","n"))
 	echohl None
 	let l:msg = "File ".(l:answer=="y" ? "" : "NOT ")."saved on branch \'".l:current."\'."
+
 	" ok, save even with different branches
 	if l:answer=="y"
 		exec "write"
 	endif
+
 	" show message
 	echohl WarningMsg
 	echo l:msg
