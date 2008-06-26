@@ -1,7 +1,7 @@
 "
 " Git branch info
-" Last change: June 19 2008
-" Version> 0.0.7
+" Last change: June 26 2008
+" Version> 0.0.8
 " Maintainer: Eustáquio 'TaQ' Rangel
 " License: GPL
 " URL: git://github.com/taq/vim-git-branch-info.git
@@ -77,9 +77,10 @@ function GitBranchInfoCheckReadable()
 endfunction
 
 function GitBranchInfoWriteCheck()
+	let l:writecmd = v:cmdbang==1 ? "write!" : "write"
 	" not controlled by Git, write this thing!
 	if !GitBranchInfoCheckGitDir()
-		exec "write"
+		exec l:writecmd expand("<afile>")
 		return 1
 	endif
 
@@ -95,7 +96,7 @@ function GitBranchInfoWriteCheck()
 	" if the branches are the same, no problem
 	let l:current = GitBranchInfoTokens()[0]
 	if l:current==b:git_load_branch
-		exec "write"
+		exec l:writecmd expand("<afile>")
 		return 1
 	endif
 
@@ -107,7 +108,7 @@ function GitBranchInfoWriteCheck()
 
 	" ok, save even with different branches
 	if l:answer=="y"
-		exec "write"
+		exec l:writecmd expand("<afile>")
 	endif
 
 	" show message
