@@ -60,8 +60,9 @@
 " This will show you the current branch only. No prefix text, no characters
 " around it. You can also make another functions to use the returned array.
 "
-let s:menu_on	= 0
-let s:checking = ""
+let s:menu_on		= 0
+let s:checking		= ""
+let s:rebase_msg	= 'Rebasing,merging,bisecting?'
 let b:git_dir	= ""
 let b:git_load_branch = ""
 
@@ -96,6 +97,12 @@ function GitBranchInfoWriteCheck()
 	" if the branches are the same, no problem
 	let l:current = GitBranchInfoTokens()[0]
 	if l:current==b:git_load_branch
+		exec l:writecmd expand("<afile>")
+		return 1
+	endif
+
+	" if we're rebasing, merging or bisecting, write the file
+	if l:current==s:rebase_msg
 		exec l:writecmd expand("<afile>")
 		return 1
 	endif
@@ -233,24 +240,35 @@ function GitBranchInfoTokens()
 		let s:current = ''
 		return [s:current,[],[]]
 	endif
-	let s:current	= split(split(readfile(b:git_dir."/HEAD",'',1)[0])[1],"/")[2]
-	if exists("g:git_branch_status_head_current")
-		let l:heads	= []
-	else		
-		let l:heads	= split(glob(b:git_dir."/refs/heads/*"),"\n")
-		call map(l:heads,'substitute(v:val,b:git_dir."/refs/heads/","","")')
-		call sort(filter(l:heads,'v:val !~ s:current'))
-	endif		
-	if exists("g:git_branch_status_ignore_remotes")
-		let l:remotes = []
-	else
-		let l:remotes	= split(glob(b:git_dir."/refs/remotes/*/**"),"\n")
-		call sort(map(l:remotes,'substitute(v:val,b:git_dir."/refs/remotes/","","")'))
-	endif		
-	let l:checking = s:current.join(l:heads).join(l:remotes)
-	if l:checking != s:checking && has("gui")
-		call GitBranchInfoRenewMenu(s:current,l:heads,l:remotes)
-	endif
-	let s:checking = l:checking
+	try
+		let l:contents	= readfile(b:git_dir."/HEAD",'',1)[0]
+		if stridx(l:contents,"/") < 0
+			let s:current = s:rebase_msg
+			return [s:current,[],[]]
+		endif
+		let s:current	= split(split(l:contents)[1],"/")[2]
+		if exists("g:git_branch_status_head_current")
+			let l:heads	= []
+		else		
+			let l:heads	= split(glob(b:git_dir."/refs/heads/*"),"\n")
+			call map(l:heads,'substitute(v:val,b:git_dir."/refs/heads/","","")')
+			call sort(filter(l:heads,'v:val !~ s:current'))
+		endif		
+		if exists("g:git_branch_status_ignore_remotes")
+			let l:remotes = []
+		else
+			let l:remotes	= split(glob(b:git_dir."/refs/remotes/*/**"),"\n")
+			call sort(map(l:remotes,'substitute(v:val,b:git_dir."/refs/remotes/","","")'))
+		endif		
+		let l:checking = s:current.join(l:heads).join(l:remotes)
+		if l:checking != s:checking && has("gui")
+			call GitBranchInfoRenewMenu(s:current,l:heads,l:remotes)
+		endif
+		let s:checking = l:checking
+	catch /.*/
+		let s:current	= '???'
+		let l:heads		= []
+		let l:remotes	= []
+	endtry
 	return [s:current,l:heads,l:remotes]
 endfunction
