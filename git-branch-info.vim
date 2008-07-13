@@ -1,7 +1,7 @@
 "
 " Git branch info
-" Last change: June 26 2008
-" Version> 0.0.8
+" Last change: July 13 2008
+" Version> 0.0.9
 " Maintainer: Eustáquio 'TaQ' Rangel
 " License: GPL
 " URL: git://github.com/taq/vim-git-branch-info.git
