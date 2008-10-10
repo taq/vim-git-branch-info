@@ -1,7 +1,7 @@
 "
 " Git branch info
 " Last change: July 13 2008
-" Version> 0.0.9
+" Version> 0.1.0
 " Maintainer: Eustáquio 'TaQ' Rangel
 " License: GPL
 " URL: git://github.com/taq/vim-git-branch-info.git
@@ -132,7 +132,7 @@ function GitBranchInfoInit()
 endfunction
 
 function GitBranchInfoFindDir()
-	let l:bufname	= bufname("%")
+	let l:bufname	= getcwd()."/".bufname("%")
 	let l:buflist	= strlen(l:bufname)>0 ? split(l:bufname,"/") : [""]
 	let l:prefix	= l:bufname =~ "^/" ? "/" : ""
 	let b:git_dir	= ""
