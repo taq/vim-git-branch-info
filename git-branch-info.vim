@@ -9,12 +9,12 @@
 " This plugin show branches information on the status line.
 " To install, just put this file on ~/.vim/plugins and set your status line:
 "
-" :set statusline=%{GitBranchInfoString}
+" :set statusline=%{GitBranchInfoString()}
 "
 " Of course you can append this configuration to an existing one and make all 
 " the customization you want on the status line, like:
 "
-" :set statusline=%#ErrorMsg#%{GitBranchInfoString}%#StatusLine#
+" :set statusline=%#ErrorMsg#%{GitBranchInfoString()}%#StatusLine#
 "
 " The command above will show the Git branches info on the same color as the
 " error messages. You can choose any color scheme you want to. Use
