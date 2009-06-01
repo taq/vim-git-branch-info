@@ -143,14 +143,14 @@ function GitBranchInfoFindDir()
 	let l:buflist	= strlen(l:bufname)>0 ? split(l:bufname,"/") : [""]
 	let l:prefix	= l:bufname =~ "^/" ? "/" : ""
 	let b:git_dir	= ""
-	for l:item in l:buflist
+	while len(l:buflist) > 0
 		let l:path = l:prefix.join(l:buflist,"/").l:prefix.".git"
 		if !empty(finddir(l:path))
 			let b:git_dir = l:path
 			break
 		endif
 		call remove(l:buflist,-1)
-	endfor
+	endwhile
 	return b:git_dir
 endfunction
 
