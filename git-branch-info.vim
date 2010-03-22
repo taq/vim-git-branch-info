@@ -70,21 +70,21 @@ let s:rebase_msg	= 'Rebasing,merging,bisecting?'
 let b:gbi_git_dir	= ""
 let b:gbi_git_load_branch = ""
 
-autocmd BufEnter * call GitBranchInfoInit()
+autocmd BufEnter * call s:GitBranchInfoInit()
 
 if exists("g:git_branch_check_write")
-	autocmd BufWriteCmd * call GitBranchInfoWriteCheck()
+	autocmd BufWriteCmd * call s:GitBranchInfoWriteCheck()
 endif	
 
-function GitBranchInfoCheckGitDir()
+function! s:GitBranchInfoCheckGitDir()
 	return exists("b:gbi_git_dir") && !empty(b:gbi_git_dir)
 endfunction
 
-function GitBranchInfoCheckReadable()
+function! s:GitBranchInfoCheckReadable()
 	return filereadable(b:gbi_git_dir."/HEAD")
 endfunction
 
-function GitBranchInfoWriteCheck()
+function! s:GitBranchInfoWriteCheck()
 	let l:writecmd = v:cmdbang==1 ? "write!" : "write"
 	" not controlled by Git, write this thing!
 	if !GitBranchInfoCheckGitDir()
@@ -132,13 +132,13 @@ function GitBranchInfoWriteCheck()
 	return l:answer=="y"
 endfunction
 
-function GitBranchInfoInit()
-	call GitBranchInfoFindDir()
+function! s:GitBranchInfoInit()
+	call s:GitBranchInfoFindDir()
 	let l:current = GitBranchInfoTokens()
 	let b:gbi_git_load_branch = l:current[0]
 endfunction
 
-function GitBranchInfoFindDir()
+function! s:GitBranchInfoFindDir()
 	let l:bufname	= getcwd()."/".expand("%:t")
 	let l:buflist	= strlen(l:bufname)>0 ? split(l:bufname,"/") : [""]
 	let l:prefix	= l:bufname =~ "^/" ? "/" : ""
@@ -149,34 +149,34 @@ function GitBranchInfoFindDir()
 			let b:gbi_git_dir = l:path
 			break
 		endif
-		call remove(l:buflist,-1)
+		call s:remove(l:buflist,-1)
 	endwhile
 	return b:gbi_git_dir
 endfunction
 
-function GitBranchInfoGitDir()
+function! s:GitBranchInfoGitDir()
 	return b:gbi_git_dir
 endfunction
 
-function GitBranchInfoLoadBranch()
+function! s:GitBranchInfoLoadBranch()
 	return b:gbi_git_load_branch
 endfunction
 
-function GitBranchInfoRenewMenu(current,heads,remotes)
-	call GitBranchInfoRemoveMenu()
-	call GitBranchInfoShowMenu(a:current,a:heads,a:remotes)
+function! s:GitBranchInfoRenewMenu(current,heads,remotes)
+	call s:GitBranchInfoRemoveMenu()
+	call s:GitBranchInfoShowMenu(a:current,a:heads,a:remotes)
 endfunction
 
-function GitBranchInfoCheckout(branch)
+function! s:GitBranchInfoCheckout(branch)
 	let l:tokens	= GitBranchInfoTokens()
 	let l:checkout	= "git\ checkout\ ".a:branch 
 	let l:where		= substitute(b:gbi_git_dir,".git$","","")
 	let l:cmd		= strlen(l:where)>0 ? "!cd\ ".l:where.";\ ".l:checkout : "!".l:checkout
 	exe l:cmd
-	call GitBranchInfoRenewMenu(l:tokens[0],l:tokens[1],l:tokens[2])
+	call s:GitBranchInfoRenewMenu(l:tokens[0],l:tokens[1],l:tokens[2])
 endfunction
 
-function GitBranchInfoFetch(remote)
+function! s:GitBranchInfoFetch(remote)
 	let l:tokens	= GitBranchInfoTokens()
 	let l:fetch		=  "git\ fetch\ ".a:remote
 	let l:where		= substitute(b:gbi_git_dir,".git$","","")
@@ -184,7 +184,7 @@ function GitBranchInfoFetch(remote)
 	exe l:cmd
 endfunction
 
-function GitBranchInfoShowMenu(current,heads,remotes)
+function! s:GitBranchInfoShowMenu(current,heads,remotes)
 	if !has("gui")
 		return
 	endif
@@ -196,7 +196,7 @@ function GitBranchInfoShowMenu(current,heads,remotes)
 	let l:locals	= sort(extend(l:current,l:heads))
 	for l:branch in l:locals
 		let l:moption	= (l:branch==l:compare ? "Working\\ \\on\\ " : "Checkout\\ ").l:branch
-		let l:mcom		= (l:branch==l:compare ? ":echo 'Already\ on\ branch\ \''".l:branch."\''.'<CR>" : "call GitBranchInfoCheckout('".l:branch."')<CR><CR>")
+		let l:mcom		= (l:branch==l:compare ? ":echo 'Already\ on\ branch\ \''".l:branch."\''.'<CR>" : "call s:GitBranchInfoCheckout('".l:branch."')<CR><CR>")
 		exe ":menu <silent> Plugin.Git\\ Info.".l:moption." :".l:mcom
 	endfor
 	exe ":menu <silent> Plugin.Git\\ Info.-Local- :"
@@ -207,11 +207,11 @@ function GitBranchInfoShowMenu(current,heads,remotes)
 			continue
 		endif
 		let l:lastone = l:tokens[0]
-		exe "menu <silent> Plugin.Git\\ Info.Fetch\\ ".l:tokens[0]." :call GitBranchInfoFetch('".l:tokens[0]."')<CR><CR>"
+		exe "menu <silent> Plugin.Git\\ Info.Fetch\\ ".l:tokens[0]." :call s:GitBranchInfoFetch('".l:tokens[0]."')<CR><CR>"
 	endfor
 endfunction
 
-function GitBranchInfoRemoveMenu()
+function! s:GitBranchInfoRemoveMenu()
 	if !has("gui") || s:menu_on==0
 		return
 	endif
@@ -219,10 +219,10 @@ function GitBranchInfoRemoveMenu()
 	let s:menu_on = 0
 endfunction
 
-function GitBranchInfoString()
+function! s:GitBranchInfoString()
 	let l:tokens	= GitBranchInfoTokens()	" get the tokens
 	if len(l:tokens)==1							" no git here
-		call GitBranchInfoRemoveMenu()
+		call s:GitBranchInfoRemoveMenu()
 		return l:tokens[0]
 	end
 	let s:current	= l:tokens[0]				" the current branch is the first one
@@ -233,12 +233,12 @@ function GitBranchInfoString()
 	" find the prefix text
 	let l:text		= exists("g:git_branch_status_text")   ? g:git_branch_status_text : " Git "
 	if s:menu_on == 0
-		call GitBranchInfoShowMenu(l:tokens[0],l:tokens[1],l:tokens[2])
+		call s:GitBranchInfoShowMenu(l:tokens[0],l:tokens[1],l:tokens[2])
 	endif
 	return l:text.l:around[0].s:current.l:around[1].(exists("g:git_branch_status_head_current")?"":l:around[0].join(l:branches,",").l:around[1])
 endfunction
 
-function GitBranchInfoTokens()
+function! s:GitBranchInfoTokens()
 	if !GitBranchInfoCheckGitDir()
 		let s:current = ''
 		return [exists("g:git_branch_status_nogit") ? g:git_branch_status_nogit : "No git."]
@@ -271,7 +271,7 @@ function GitBranchInfoTokens()
 		endif		
 		let l:checking = s:current.join(l:heads).join(l:remotes)
 		if l:checking != s:checking && has("gui")
-			call GitBranchInfoRenewMenu(s:current,l:heads,l:remotes)
+			call s:GitBranchInfoRenewMenu(s:current,l:heads,l:remotes)
 		endif
 		let s:checking = l:checking
 	catch /.*/
