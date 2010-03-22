@@ -70,7 +70,10 @@ let s:rebase_msg	= 'Rebasing,merging,bisecting?'
 let b:gbi_git_dir	= ""
 let b:gbi_git_load_branch = ""
 
-autocmd BufEnter * call s:GitBranchInfoInit()
+augroup GitBranchInfoAuto
+	au!
+	autocmd BufEnter * call s:GitBranchInfoInit()
+augroup END
 
 if exists("g:git_branch_check_write")
 	autocmd BufWriteCmd * call s:GitBranchInfoWriteCheck()
