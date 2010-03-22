@@ -1,7 +1,7 @@
 "
 " Git branch info
-" Last change: October 13 2009
-" Version> 0.1.4
+" Last change: March 20 2010
+" Version> 0.1.5
 " Maintainer: Eustáquio 'TaQ' Rangel
 " License: GPL
 " URL: git://github.com/taq/vim-git-branch-info.git
@@ -67,8 +67,8 @@
 let s:menu_on		= 0
 let s:checking		= ""
 let s:rebase_msg	= 'Rebasing,merging,bisecting?'
-let b:git_dir	= ""
-let b:git_load_branch = ""
+let b:gbi_git_dir	= ""
+let b:gbi_git_load_branch = ""
 
 autocmd BufEnter * call GitBranchInfoInit()
 
@@ -77,11 +77,11 @@ if exists("g:git_branch_check_write")
 endif	
 
 function GitBranchInfoCheckGitDir()
-	return exists("b:git_dir") && !empty(b:git_dir)
+	return exists("b:gbi_git_dir") && !empty(b:gbi_git_dir)
 endfunction
 
 function GitBranchInfoCheckReadable()
-	return filereadable(b:git_dir."/HEAD")
+	return filereadable(b:gbi_git_dir."/HEAD")
 endfunction
 
 function GitBranchInfoWriteCheck()
@@ -103,7 +103,7 @@ function GitBranchInfoWriteCheck()
 
 	" if the branches are the same, no problem
 	let l:current = GitBranchInfoTokens()[0]
-	if l:current==b:git_load_branch
+	if l:current==b:gbi_git_load_branch
 		exec l:writecmd expand("<afile>")
 		return 1
 	endif
@@ -116,7 +116,7 @@ function GitBranchInfoWriteCheck()
 
 	" ask what we will do
 	echohl ErrorMsg
-	let l:answer = tolower(input("Loaded from \'".b:git_load_branch."\' branch but saving on \'".l:current."\' branch, confirm [y/n]? ","n"))
+	let l:answer = tolower(input("Loaded from \'".b:gbi_git_load_branch."\' branch but saving on \'".l:current."\' branch, confirm [y/n]? ","n"))
 	echohl None
 	let l:msg = "File ".(l:answer=="y" ? "" : "NOT ")."saved on branch \'".l:current."\'."
 
@@ -135,31 +135,31 @@ endfunction
 function GitBranchInfoInit()
 	call GitBranchInfoFindDir()
 	let l:current = GitBranchInfoTokens()
-	let b:git_load_branch = l:current[0]
+	let b:gbi_git_load_branch = l:current[0]
 endfunction
 
 function GitBranchInfoFindDir()
 	let l:bufname	= getcwd()."/".expand("%:t")
 	let l:buflist	= strlen(l:bufname)>0 ? split(l:bufname,"/") : [""]
 	let l:prefix	= l:bufname =~ "^/" ? "/" : ""
-	let b:git_dir	= ""
+	let b:gbi_git_dir	= ""
 	while len(l:buflist) > 0
 		let l:path = l:prefix.join(l:buflist,"/").l:prefix.".git"
 		if !empty(finddir(l:path))
-			let b:git_dir = l:path
+			let b:gbi_git_dir = l:path
 			break
 		endif
 		call remove(l:buflist,-1)
 	endwhile
-	return b:git_dir
+	return b:gbi_git_dir
 endfunction
 
 function GitBranchInfoGitDir()
-	return b:git_dir
+	return b:gbi_git_dir
 endfunction
 
 function GitBranchInfoLoadBranch()
-	return b:git_load_branch
+	return b:gbi_git_load_branch
 endfunction
 
 function GitBranchInfoRenewMenu(current,heads,remotes)
@@ -170,7 +170,7 @@ endfunction
 function GitBranchInfoCheckout(branch)
 	let l:tokens	= GitBranchInfoTokens()
 	let l:checkout	= "git\ checkout\ ".a:branch 
-	let l:where		= substitute(b:git_dir,".git$","","")
+	let l:where		= substitute(b:gbi_git_dir,".git$","","")
 	let l:cmd		= strlen(l:where)>0 ? "!cd\ ".l:where.";\ ".l:checkout : "!".l:checkout
 	exe l:cmd
 	call GitBranchInfoRenewMenu(l:tokens[0],l:tokens[1],l:tokens[2])
@@ -179,7 +179,7 @@ endfunction
 function GitBranchInfoFetch(remote)
 	let l:tokens	= GitBranchInfoTokens()
 	let l:fetch		=  "git\ fetch\ ".a:remote
-	let l:where		= substitute(b:git_dir,".git$","","")
+	let l:where		= substitute(b:gbi_git_dir,".git$","","")
 	let l:cmd		= strlen(l:where)>0 ? "!cd\ ".l:where.";\ ".l:fetch : "!".l:fetch
 	exe l:cmd
 endfunction
@@ -248,7 +248,7 @@ function GitBranchInfoTokens()
 		return [s:current,[],[]]
 	endif
 	try
-		let l:contents	= readfile(b:git_dir."/HEAD",'',1)[0]
+		let l:contents	= readfile(b:gbi_git_dir."/HEAD",'',1)[0]
 		if stridx(l:contents,"/") < 0
 			let s:current = s:rebase_msg
 			return [s:current,[],[]]
@@ -259,15 +259,15 @@ function GitBranchInfoTokens()
 		if exists("g:git_branch_status_head_current")
 			let l:heads	= []
 		else		
-			let l:heads	= split(glob(b:git_dir."/refs/heads/*"),"\n")
-			call map(l:heads,'substitute(v:val,b:git_dir."/refs/heads/","","")')
+			let l:heads	= split(glob(b:gbi_git_dir."/refs/heads/*"),"\n")
+			call map(l:heads,'substitute(v:val,b:gbi_git_dir."/refs/heads/","","")')
 			call sort(filter(l:heads,'v:val !~ s:current'))
 		endif		
 		if exists("g:git_branch_status_ignore_remotes")
 			let l:remotes = []
 		else
-			let l:remotes	= split(glob(b:git_dir."/refs/remotes/*/**"),"\n")
-			call sort(map(l:remotes,'substitute(v:val,b:git_dir."/refs/remotes/","","")'))
+			let l:remotes	= split(glob(b:gbi_git_dir."/refs/remotes/*/**"),"\n")
+			call sort(map(l:remotes,'substitute(v:val,b:gbi_git_dir."/refs/remotes/","","")'))
 		endif		
 		let l:checking = s:current.join(l:heads).join(l:remotes)
 		if l:checking != s:checking && has("gui")
