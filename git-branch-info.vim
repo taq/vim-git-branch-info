@@ -87,7 +87,7 @@ endfunction
 function! s:GitBranchInfoWriteCheck()
 	let l:writecmd = v:cmdbang==1 ? "write!" : "write"
 	" not controlled by Git, write this thing!
-	if !GitBranchInfoCheckGitDir()
+	if !s:GitBranchInfoCheckGitDir()
 		exec l:writecmd expand("<afile>")
 		return 1
 	endif
@@ -102,7 +102,7 @@ function! s:GitBranchInfoWriteCheck()
 	endif
 
 	" if the branches are the same, no problem
-	let l:current = GitBranchInfoTokens()[0]
+	let l:current = s:GitBranchInfoTokens()[0]
 	if l:current==b:gbi_git_load_branch
 		exec l:writecmd expand("<afile>")
 		return 1
@@ -134,7 +134,7 @@ endfunction
 
 function! s:GitBranchInfoInit()
 	call s:GitBranchInfoFindDir()
-	let l:current = GitBranchInfoTokens()
+	let l:current = s:GitBranchInfoTokens()
 	let b:gbi_git_load_branch = l:current[0]
 endfunction
 
@@ -149,7 +149,7 @@ function! s:GitBranchInfoFindDir()
 			let b:gbi_git_dir = l:path
 			break
 		endif
-		call s:remove(l:buflist,-1)
+		call remove(l:buflist,-1)
 	endwhile
 	return b:gbi_git_dir
 endfunction
@@ -158,7 +158,7 @@ function! s:GitBranchInfoGitDir()
 	return b:gbi_git_dir
 endfunction
 
-function! s:GitBranchInfoLoadBranch()
+function! GitBranchInfoLoadBranch()
 	return b:gbi_git_load_branch
 endfunction
 
@@ -167,8 +167,8 @@ function! s:GitBranchInfoRenewMenu(current,heads,remotes)
 	call s:GitBranchInfoShowMenu(a:current,a:heads,a:remotes)
 endfunction
 
-function! s:GitBranchInfoCheckout(branch)
-	let l:tokens	= GitBranchInfoTokens()
+function! <SID>:GitBranchInfoCheckout(branch)
+	let l:tokens	= s:GitBranchInfoTokens()
 	let l:checkout	= "git\ checkout\ ".a:branch 
 	let l:where		= substitute(b:gbi_git_dir,".git$","","")
 	let l:cmd		= strlen(l:where)>0 ? "!cd\ ".l:where.";\ ".l:checkout : "!".l:checkout
@@ -176,8 +176,8 @@ function! s:GitBranchInfoCheckout(branch)
 	call s:GitBranchInfoRenewMenu(l:tokens[0],l:tokens[1],l:tokens[2])
 endfunction
 
-function! s:GitBranchInfoFetch(remote)
-	let l:tokens	= GitBranchInfoTokens()
+function! <SID>:GitBranchInfoFetch(remote)
+	let l:tokens	= s:GitBranchInfoTokens()
 	let l:fetch		=  "git\ fetch\ ".a:remote
 	let l:where		= substitute(b:gbi_git_dir,".git$","","")
 	let l:cmd		= strlen(l:where)>0 ? "!cd\ ".l:where.";\ ".l:fetch : "!".l:fetch
@@ -196,7 +196,7 @@ function! s:GitBranchInfoShowMenu(current,heads,remotes)
 	let l:locals	= sort(extend(l:current,l:heads))
 	for l:branch in l:locals
 		let l:moption	= (l:branch==l:compare ? "Working\\ \\on\\ " : "Checkout\\ ").l:branch
-		let l:mcom		= (l:branch==l:compare ? ":echo 'Already\ on\ branch\ \''".l:branch."\''.'<CR>" : "call s:GitBranchInfoCheckout('".l:branch."')<CR><CR>")
+		let l:mcom		= (l:branch==l:compare ? ":echo 'Already\ on\ branch\ \''".l:branch."\''.'<CR>" : "call <SID>:GitBranchInfoCheckout('".l:branch."')<CR><CR>")
 		exe ":menu <silent> Plugin.Git\\ Info.".l:moption." :".l:mcom
 	endfor
 	exe ":menu <silent> Plugin.Git\\ Info.-Local- :"
@@ -207,7 +207,7 @@ function! s:GitBranchInfoShowMenu(current,heads,remotes)
 			continue
 		endif
 		let l:lastone = l:tokens[0]
-		exe "menu <silent> Plugin.Git\\ Info.Fetch\\ ".l:tokens[0]." :call s:GitBranchInfoFetch('".l:tokens[0]."')<CR><CR>"
+		exe "menu <silent> Plugin.Git\\ Info.Fetch\\ ".l:tokens[0]." :call <SID>:GitBranchInfoFetch('".l:tokens[0]."')<CR><CR>"
 	endfor
 endfunction
 
@@ -219,8 +219,8 @@ function! s:GitBranchInfoRemoveMenu()
 	let s:menu_on = 0
 endfunction
 
-function! s:GitBranchInfoString()
-	let l:tokens	= GitBranchInfoTokens()	" get the tokens
+function! GitBranchInfoString()
+	let l:tokens	= s:GitBranchInfoTokens()	" get the tokens
 	if len(l:tokens)==1							" no git here
 		call s:GitBranchInfoRemoveMenu()
 		return l:tokens[0]
@@ -239,11 +239,11 @@ function! s:GitBranchInfoString()
 endfunction
 
 function! s:GitBranchInfoTokens()
-	if !GitBranchInfoCheckGitDir()
+	if !s:GitBranchInfoCheckGitDir()
 		let s:current = ''
 		return [exists("g:git_branch_status_nogit") ? g:git_branch_status_nogit : "No git."]
 	endif
-	if !GitBranchInfoCheckReadable()
+	if !s:GitBranchInfoCheckReadable()
 		let s:current = ''
 		return [s:current,[],[]]
 	endif
