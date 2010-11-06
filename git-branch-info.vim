@@ -126,7 +126,8 @@ function! GitBranchInfoTokens()
 		if exists("g:git_branch_status_head_current")
 			let l:heads	= []
 		else		
-			let l:heads	= split(glob(b:gbi_git_dir."/refs/heads/*"),"\n")
+			let l:heads	= split(glob(b:gbi_git_dir."/refs/heads/**"),"\n")
+			let l:heads	= filter(l:heads, "!isdirectory(v:val)")
 			call map(l:heads,'substitute(v:val,b:gbi_git_dir."/refs/heads/","","")')
 			call sort(filter(l:heads,'v:val !~ s:current'))
 		endif		
