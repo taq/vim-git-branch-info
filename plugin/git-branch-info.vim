@@ -1,6 +1,6 @@
 "
 " Git branch info
-" Last change: March 20 2010
+" Last change: April 09 2011
 " Version> 0.1.5
 " Maintainer: Eustáquio 'TaQ' Rangel
 " License: GPL
@@ -63,6 +63,11 @@
 "
 " This will show you the current branch only. No prefix text, no characters
 " around it. You can also make another functions to use the returned array.
+"
+" By default the current working directory is checked for git repositories. If
+" you want to check the directory of current buffer file use the following
+" variable:
+" let g:git_branch_file_based=1
 "
 let s:menu_on		= 0
 let s:checking		= ""
@@ -236,18 +241,26 @@ function! s:GitBranchInfoInit()
 endfunction
 
 function! s:GitBranchInfoFindDir()
-	let l:bufname	= getcwd()."/".expand("%:t")
-	let l:buflist	= strlen(l:bufname)>0 ? split(l:bufname,"/") : [""]
-	let l:prefix	= l:bufname =~ "^/" ? "/" : ""
-	let b:gbi_git_dir	= ""
-	while len(l:buflist) > 0
-		let l:path = l:prefix.join(l:buflist,"/").l:prefix.".git"
-		if !empty(finddir(l:path))
-			let b:gbi_git_dir = l:path
-			break
-		endif
-		call remove(l:buflist,-1)
-	endwhile
+    let l:bufname	= getcwd()."/".expand("%:t")
+    let l:prefix	= l:bufname =~ "^/" ? "/" : ""
+    let b:gbi_git_dir	= ""
+
+    if exists("g:git_branch_file_based") && g:git_branch_file_based
+        let l:path = escape(escape(expand("%:p:h"), ' '), '\ ').l:prefix.".git"
+        if !empty(finddir(l:path))
+            let b:gbi_git_dir = l:path
+        endif
+    else
+        let l:buflist	= strlen(l:bufname)>0 ? split(l:bufname,"/") : [""]
+        while len(l:buflist) > 0
+            let l:path = l:prefix.join(l:buflist,"/").l:prefix.".git"
+            if !empty(finddir(l:path))
+                let b:gbi_git_dir = l:path
+                break
+            endif
+            call remove(l:buflist,-1)
+        endwhile
+    endif
 	return b:gbi_git_dir
 endfunction
 
