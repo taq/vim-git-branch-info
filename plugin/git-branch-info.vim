@@ -245,6 +245,12 @@ function! s:GitBranchInfoFindDir()
 		if !empty(finddir(l:path))
 			let b:gbi_git_dir = l:path
 			break
+		elseif filereadable(l:path)
+			let l:line = get(readfile(l:path, '', 1), 0, '')
+			if l:line =~# '^gitdir: ' && !empty(finddir(line[8:-1]))
+				let b:gbi_git_dir = line[8:-1]
+				break
+			endif
 		endif
 		call remove(l:buflist,-1)
 	endwhile
